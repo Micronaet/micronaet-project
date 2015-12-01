@@ -30,7 +30,7 @@
     'license': 'AGPL-3',
     'depends': [
         'base',
-        
+        'project',
         ],
     'init_xml': [],
     'demo': [],

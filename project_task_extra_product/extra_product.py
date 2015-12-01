@@ -38,5 +38,34 @@ from openerp.tools import (DEFAULT_SERVER_DATE_FORMAT,
 
 _logger = logging.getLogger(__name__)
 
+class ProjectProjectPricelist(orm.Model):
+    ''' Pricelist linked to project
+    '''
+    _name = 'project.project.pricelist'
+    _description = 'Project pricelist'
+    
+    # -------------------------------------------------------------------------
+    #                           Postgres table:
+    # -------------------------------------------------------------------------
+    _columns = {
+        'product_id': fields.many2one('product.product', 'Product', 
+            ondelete='set null'),
+        'project_id': fields.many2one('project.project', 'Project', 
+            ondelete='cascade'),
+        'note': fields.text('Note'),
+        'pricelist': fields.float('Pricelist', digits=(16, 2), required=True), 
+        }
+        
+class ProjectProject(orm.Model):
+    ''' Add relation field to project
+    '''
+    _inherit = 'project.project'
+    
+    _columns = {
+        'pricelist_ids': fields.one2many('project.project.pricelist', 
+             'project_id', 'Pricelist'),             
+        }
+   
+    
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
