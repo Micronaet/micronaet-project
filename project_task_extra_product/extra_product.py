@@ -91,19 +91,19 @@ class ProjectTaskWork(osv.osv):
     # ---------
     # onchange:
     # ---------
-    def onchange_create_domain(seff, cr, uid, ids, project_id, context=None):
+    def onchange_create_domain(self, cr, uid, ids, project_id, context=None):
         ''' Set domain in product
         '''
+        # TODO non funziona!!
         res = {}
         res['value'] = {}
         res['domain'] = {}
         if not project_id:
             res['domain']['product_id'] = [('id', 'in', ())]
             return res
-
         project_proxy = self.pool.get('project.project').browse(
             cr, uid, project_id, context=context)
-        product_ids = [item.id for item project_proxy.pricelist_ids]
+        product_ids = [item.id for item in project_proxy.pricelist_ids]
         res['domain']['product_id'] = [('id', 'in', product_ids)]
         return res
         
