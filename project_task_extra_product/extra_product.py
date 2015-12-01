@@ -44,12 +44,29 @@ class ProjectProjectPricelist(orm.Model):
     _name = 'project.project.pricelist'
     _description = 'Project pricelist'
     
+    # Onchange:
+    def onchange_product_id(self, cr, uid, ids, product_id, context=None):
+        ''' On change product write pricelist 
+        '''
+        res = {}
+        res['value'] = {}
+        if not product_id:
+           res['value']['pricelist'] = False
+           return res
+
+        product_pool = self.pool.get('product.product')
+        product_proxy = product_pool.browse(
+            cr, uid, product_id, context=context)
+        res['value']['pricelist'] = product_proxy.lst_price
+        return res
+    
     # -------------------------------------------------------------------------
     #                           Postgres table:
     # -------------------------------------------------------------------------
     _columns = {
         'product_id': fields.many2one('product.product', 'Product', 
-            ondelete='set null'),
+            required=True, ondelete='set null', 
+            domain=[('type', '=', 'service')]),
         'project_id': fields.many2one('project.project', 'Project', 
             ondelete='cascade'),
         'note': fields.text('Note'),
@@ -65,7 +82,35 @@ class ProjectProject(orm.Model):
         'pricelist_ids': fields.one2many('project.project.pricelist', 
              'project_id', 'Pricelist'),             
         }
-   
+
+class ProjectTaskWork(osv.osv):
+    ''' Add pricelist operation
+    '''    
+    _inherit = 'project.task.work'
     
+    # ---------
+    # onchange:
+    # ---------
+    def onchange_create_domain(seff, cr, uid, ids, project_id, context=None):
+        ''' Set domain in product
+        '''
+        res = {}
+        res['value'] = {}
+        res['domain'] = {}
+        if not project_id:
+            res['domain']['product_id'] = [('id', 'in', ())]
+            return res
+
+        project_proxy = self.pool.get('project.project').browse(
+            cr, uid, project_id, context=context)
+        product_ids = [item.id for item project_proxy.pricelist_ids]
+        res['domain']['product_id'] = [('id', 'in', product_ids)]
+        return res
+        
+    _columns = {
+        'extra_product_id': fields.many2one('product.product', 'Product', 
+            ondelete='set null'),
+        'extra_qty': fields.integer('Q.ty'),
+        }
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
