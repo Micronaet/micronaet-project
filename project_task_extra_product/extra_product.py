@@ -43,9 +43,104 @@ class AccountAnalyticLine(orm.Model):
     '''
     _inherit = 'account.analytic.line'
     
+    # ---------------------------
     # Override original function:
+    # ---------------------------
+    # ---------------------------------------
+    # Override function hr_timesheet_invoice:
+    # ---------------------------------------
+    def _prepare_cost_invoice_line(self, cr, uid, invoice_id, product_id, uom, 
+            user_id, factor_id, account, analytic_lines, journal_type, data, 
+            context=None):
+        ''' Create one line in invoice from analytic
+        '''    
+        product_obj = self.pool['product.product']
+
+        uom_context = dict(context or {}, uom=uom)
+
+        total_price = sum(l.amount for l in analytic_lines)
+        total_qty = sum(l.unit_amount for l in analytic_lines)
+
+        if data.get('product'):
+            # force product, use its public price
+            if isinstance(data['product'], (tuple, list)):
+                product_id = data['product'][0]
+            else:
+                product_id = data['product']
+            unit_price = self._get_invoice_price(
+                cr, uid, account, product_id, user_id, total_qty, uom_context)
+        elif journal_type == 'general' and product_id:
+            # timesheets, use sale price
+            unit_price = self._get_invoice_price(
+                cr, uid, account, product_id, user_id, total_qty, uom_context)
+        else:
+            # expenses, using price from amount field
+            unit_price = total_price * -1.0 / total_qty
+
+        factor = self.pool['hr_timesheet_invoice.factor'].browse(
+            cr, uid, factor_id, context=uom_context)
+        factor_name = factor.customer_name
+        curr_invoice_line = {
+            'price_unit': unit_price,
+            'quantity': total_qty,
+            'product_id': product_id,
+            'discount': factor.factor,
+            'invoice_id': invoice_id,
+            'name': factor_name,
+            'uos_id': uom,
+            'account_analytic_id': account.id,
+            }
+
+        if product_id:
+            product = product_obj.browse(cr, uid, product_id, 
+                context=uom_context)
+            factor_name = product_obj.name_get(cr, uid, [product_id], 
+                context=uom_context)[0][1]
+            if factor.customer_name:
+                factor_name += ' - ' + factor.customer_name
+
+                general_account = product.property_account_income or \
+                    product.categ_id.property_account_income_categ
+                if not general_account:
+                    raise osv.except_osv(
+                        _('Error!'), 
+                        _("Configuration Error!") + '\n' + _(
+                            "Please define income account for product '%s'."
+                            ) % product.name)
+                taxes = product.taxes_id or general_account.tax_ids
+                tax = self.pool['account.fiscal.position'].map_tax(
+                    cr, uid, account.partner_id.property_account_position, 
+                    taxes)
+                curr_invoice_line.update({
+                    'invoice_line_tax_id': [(6, 0, tax)],
+                    'name': factor_name,
+                    'invoice_line_tax_id': [(6, 0, tax)],
+                    'account_id': general_account.id,
+                })
+
+            note = []
+            for line in analytic_lines:
+                # set invoice_line_note
+                details = []
+                if data.get('date', False):
+                    details.append(line['date'])
+                if data.get('time', False):
+                    if line['product_uom_id']:
+                        details.append("%s %s" % (
+                            line.unit_amount, line.product_uom_id.name))
+                    else:
+                        details.append("%s" % (line['unit_amount'], ))
+                if data.get('name', False):
+                    details.append(line['name'])
+                if details:
+                    note.append(u' - '.join(
+                        map(lambda x: unicode(x) or '', details)))
+            if note:
+                curr_invoice_line['name'] += "\n" + ("\n".join(map(
+                    lambda x: unicode(x) or '', note)))
+        return curr_invoice_line
+    
     def invoice_cost_create(self, cr, uid, ids, data=None, context=None):
-        import pdb; pdb.set_trace()
         invoice_obj = self.pool.get('account.invoice')
         invoice_line_obj = self.pool.get('account.invoice.line')
         invoices = []
@@ -61,54 +156,93 @@ class AccountAnalyticLine(orm.Model):
         currency_id = False
         # prepare for iteration on journal and accounts
         for line in self.browse(cr, uid, ids, context=context):
-
+            # NEW: Get pricelist from account or partner:
+            if line.account_id.pricelist_id:
+                pricelist_id = line.account_id.pricelist_id
+                currency = pricelist_id.currency_id.id
+            else:
+                pricelist_id = \
+                    line.analytic_partner_id.property_product_pricelist
+                currency = pricelist_id.currency_id.id
+            
             key = (line.account_id.id,
                    line.account_id.company_id.id,
-                   line.account_id.pricelist_id.currency_id.id)
+                   currency)
             invoice_grouping.setdefault(key, []).append(line)
 
-        for (key_id, company_id, currency_id), analytic_lines in invoice_grouping.items():
+        for (key_id, company_id, currency_id
+                ), analytic_lines in invoice_grouping.items():
             # key_id is an account.analytic.account
-            partner = analytic_lines[0].account_id.partner_id  # will be the same for every line
+            
+            # will be the same for every line
+            partner = analytic_lines[0].analytic_partner_id
+            partner = analytic_lines[0].analytic_partner_id or analytic_lines[
+                0].account_id.partner_id  
 
-            curr_invoice = self._prepare_cost_invoice(cr, uid, partner, company_id, currency_id, analytic_lines, context=context)
-            invoice_context = dict(context,
-                                   lang=partner.lang,
-                                   force_company=company_id,  # set force_company in context so the correct product properties are selected (eg. income account)
-                                   company_id=company_id)  # set company_id in context, so the correct default journal will be selected
-            last_invoice = invoice_obj.create(cr, uid, curr_invoice, context=invoice_context)
+            curr_invoice = self._prepare_cost_invoice(
+                cr, uid, partner, company_id, currency_id, analytic_lines, 
+                context=context)
+            invoice_context = dict(
+                context,
+                lang=partner.lang,
+                # set force_company in context so the correct product 
+                #properties are selected (eg. income account)
+                force_company=company_id,  
+                # set company_id in context, so the correct default journal 
+                # will be selected
+                company_id=company_id,
+                )  
+            last_invoice = invoice_obj.create(
+                cr, uid, curr_invoice, context=invoice_context)
             invoices.append(last_invoice)
 
-            # use key (product, uom, user, invoiceable, analytic account, journal type)
+            # use key (product, uom, user, invoiceable, analytic account,
+            # journal type)
             # creates one invoice line per key
             invoice_lines_grouping = {}
             for analytic_line in analytic_lines:
                 account = analytic_line.account_id
-                if (not partner) or not (account.pricelist_id):
-                    raise osv.except_osv(_('Error!'), _('Contract incomplete. Please fill in the Customer and Pricelist fields for %s.') % (account.name))
+                # NEW: Pricelist exception:
+                #pricelist_id = analytic_line.analytic_partner_id.pricelist_id
+                if (not partner) or not (pricelist_id):
+                    raise osv.except_osv(
+                        _('Error!'), 
+                        _('Contract incomplete. Please fill in the Customer '
+                            'and Pricelist fields for %s.') % (account.name))
 
                 if not analytic_line.to_invoice:
-                    raise osv.except_osv(_('Error!'), _('Trying to invoice non invoiceable line for %s.') % (analytic_line.product_id.name))
+                    raise osv.except_osv(
+                        _('Error!'), 
+                        _('Trying to invoice non invoiceable line for %s.') % (
+                            analytic_line.product_id.name))
 
-                key = (analytic_line.product_id.id,
-                       analytic_line.product_uom_id.id,
-                       analytic_line.user_id.id,
-                       analytic_line.to_invoice.id,
-                       analytic_line.account_id,
-                       analytic_line.journal_id.type)
-                invoice_lines_grouping.setdefault(key, []).append(analytic_line)
+                key = (
+                    analytic_line.product_id.id,
+                    analytic_line.product_uom_id.id,
+                    analytic_line.user_id.id,
+                    analytic_line.to_invoice.id,
+                    analytic_line.account_id,
+                    analytic_line.journal_id.type,
+                    )
+                invoice_lines_grouping.setdefault(key, []).append(
+                    analytic_line)
 
             # finally creates the invoice line
-            for (product_id, uom, user_id, factor_id, account, journal_type), lines_to_invoice in invoice_lines_grouping.items():
-                curr_invoice_line = self._prepare_cost_invoice_line(cr, uid, last_invoice,
-                    product_id, uom, user_id, factor_id, account, lines_to_invoice,
-                    journal_type, data, context=context)
+            for (product_id, uom, user_id, factor_id, account, journal_type
+                    ), lines_to_invoice in invoice_lines_grouping.items():
+                import pdb; pdb.set_trace()    
+                curr_invoice_line = self._prepare_cost_invoice_line(
+                    cr, uid, last_invoice, product_id, uom, user_id, factor_id, 
+                    account, lines_to_invoice, journal_type, data, 
+                    context=context)
 
-                invoice_line_obj.create(cr, uid, curr_invoice_line, context=context)
-            self.write(cr, uid, [l.id for l in analytic_lines], {'invoice_id': last_invoice}, context=context)
+                invoice_line_obj.create(cr, uid, curr_invoice_line, 
+                    context=context)
+            self.write(cr, uid, [l.id for l in analytic_lines], {
+                'invoice_id': last_invoice}, context=context)
             invoice_obj.button_reset_taxes(cr, uid, [last_invoice], context)
         return invoices
-    
+
     _columns = {
         'extra_product_id': fields.many2one('project.project.pricelist', 
             'Performance', ondelete='set null'),

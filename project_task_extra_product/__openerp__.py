@@ -33,6 +33,7 @@
         'project',
         'project_timesheet', # link task work with timesheet
         'hr_timesheet_invoice', # invoice procedure
+        'analytic_partner_timesheet', # for partner extra and overrided inv.
         ],
     'init_xml': [],
     'demo': [],
