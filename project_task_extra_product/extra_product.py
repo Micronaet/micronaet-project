@@ -43,18 +43,35 @@ class AccountAnalyticLine(orm.Model):
     '''
     _inherit = 'account.analytic.line'
     
-    # ---------------------------
-    # Override original function:
-    # ---------------------------
     # ---------------------------------------
     # Override function hr_timesheet_invoice:
     # ---------------------------------------
+    # Override function for get unit price of product / employee
+    def _get_invoice_price(self, cr, uid, account, product_id, user_id, qty, 
+            context=None):
+        import pdb; pdb.set_trace()
+        context = context or {}
+        pro_price_obj = self.pool.get('product.pricelist')
+        pricelist = account.pricelist_id or \
+            account.partner_id.property_product_pricelist
+        if pricelist:
+            pl = pricelist.id
+            price = pro_price_obj.price_get(
+                cr,uid,[pl], product_id, qty or 1.0, account.partner_id.id, 
+                context=context)[pl]
+        else:
+            price = 0.0
+        return price
+    
+    # Override function for calculate invoice line from analytic:
     def _prepare_cost_invoice_line(self, cr, uid, invoice_id, product_id, uom, 
             user_id, factor_id, account, analytic_lines, journal_type, data, 
             context=None):
         ''' Create one line in invoice from analytic
-        '''    
+        '''
+        # Pool used:
         product_obj = self.pool['product.product']
+        
         uom_context = dict(context or {}, uom=uom)
 
         total_price = 0.0
@@ -64,8 +81,8 @@ class AccountAnalyticLine(orm.Model):
                 total_price += l.extra_product_id.pricelist * l.extra_qty
                 total_qty += l.extra_qty
             else:
-                l.amount
-                total_qty = l.unit_amount
+                total_price += l.amount
+                total_qty += l.unit_amount
 
         if data.get('product'):
             # force product, use its public price
@@ -78,6 +95,7 @@ class AccountAnalyticLine(orm.Model):
         elif journal_type == 'general' and product_id: 
             # timesheets, use sale price
             # NEW: Check extra product:
+            import pdb; pdb.set_trace()
             if l.extra_product_id:
                 unit_price = l.extra_product_id.pricelist                
             else:
@@ -151,6 +169,7 @@ class AccountAnalyticLine(orm.Model):
                     lambda x: unicode(x) or '', note)))
         return curr_invoice_line
     
+    # Override function for calculate invoice from analytic:
     def invoice_cost_create(self, cr, uid, ids, data=None, context=None):
         invoice_obj = self.pool.get('account.invoice')
         invoice_line_obj = self.pool.get('account.invoice.line')
