@@ -55,11 +55,17 @@ class AccountAnalyticLine(orm.Model):
         ''' Create one line in invoice from analytic
         '''    
         product_obj = self.pool['product.product']
-
         uom_context = dict(context or {}, uom=uom)
 
-        total_price = sum(l.amount for l in analytic_lines)
-        total_qty = sum(l.unit_amount for l in analytic_lines)
+        total_price = 0.0
+        total_qty = 0.0
+        for l in analytic_lines:
+            if l.extra_product_id:
+                total_price += l.extra_product_id.pricelist * l.extra_qty
+                total_qty += l.extra_qty
+            else:
+                l.amount
+                total_qty = l.unit_amount
 
         if data.get('product'):
             # force product, use its public price
@@ -215,10 +221,16 @@ class AccountAnalyticLine(orm.Model):
                         _('Error!'), 
                         _('Trying to invoice non invoiceable line for %s.') % (
                             analytic_line.product_id.name))
-
+                
+                # Find product or extra product:            
+                if analytic_line.extra_product_id:
+                    focus_product = analytic_line.extra_product_id.product_id 
+                else:
+                    focus_product = analytic_line.product_id
+                    
                 key = (
-                    analytic_line.product_id.id,
-                    analytic_line.product_uom_id.id,
+                    focus_product.id,
+                    focus_product.uom_id.id, # TODO was line.product_uom_id !!
                     analytic_line.user_id.id,
                     analytic_line.to_invoice.id,
                     analytic_line.account_id,
@@ -230,7 +242,6 @@ class AccountAnalyticLine(orm.Model):
             # finally creates the invoice line
             for (product_id, uom, user_id, factor_id, account, journal_type
                     ), lines_to_invoice in invoice_lines_grouping.items():
-                import pdb; pdb.set_trace()    
                 curr_invoice_line = self._prepare_cost_invoice_line(
                     cr, uid, last_invoice, product_id, uom, user_id, factor_id, 
                     account, lines_to_invoice, journal_type, data, 
