@@ -75,10 +75,15 @@ class AccountAnalyticLine(orm.Model):
                 product_id = data['product']
             unit_price = self._get_invoice_price(
                 cr, uid, account, product_id, user_id, total_qty, uom_context)
-        elif journal_type == 'general' and product_id:
+        elif journal_type == 'general' and product_id: 
             # timesheets, use sale price
-            unit_price = self._get_invoice_price(
-                cr, uid, account, product_id, user_id, total_qty, uom_context)
+            # NEW: Check extra product:
+            if l.extra_product_id:
+                unit_price = l.extra_product_id.pricelist                
+            else:
+                unit_price = self._get_invoice_price(
+                    cr, uid, account, product_id, user_id, total_qty, 
+                    uom_context)
         else:
             # expenses, using price from amount field
             unit_price = total_price * -1.0 / total_qty
