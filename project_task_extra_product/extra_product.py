@@ -38,6 +38,17 @@ from openerp.tools import (DEFAULT_SERVER_DATE_FORMAT,
 
 _logger = logging.getLogger(__name__)
 
+class AccountAnalyticLine(orm.Model):
+    ''' Add extra field for invoice in analytic line
+    '''
+    _inherit = 'account.analytic.line'
+    
+    _columns = {
+        'extra_product_id': fields.many2one('product.product', 'Product', 
+            ondelete='set null'),
+        'extra_qty': fields.integer('Q.ty'),
+        }
+
 class ProjectProjectPricelist(orm.Model):
     ''' Pricelist linked to project
     '''
@@ -88,6 +99,53 @@ class ProjectTaskWork(osv.osv):
     '''    
     _inherit = 'project.task.work'
     
+    def _update_extra_product_analytic(self, cr, uid, ids, context=None):
+        ''' Search and update line extra parameters
+        '''
+        if type(ids) not in (list, tuple):
+            ids = [ids]
+            
+        for work in self.browse(cr, uid, ids, context=context):
+            self.pool.get(
+            'hr.analytic.timesheet').write(
+                cr, uid, work.hr_analytic_timesheet_id.id, {
+                    'extra_product_id': work.extra_product_id.id,
+                    'extra_qty': work.extra_qty,
+                    }, context=context)
+
+    # Override function:
+    def create(self, cr, uid, vals, context=None):
+        """ Create a new record for a model ClassName
+            @param cr: cursor to database
+            @param uid: id of current user
+            @param vals: provides a data for new record
+            @param context: context arguments, like lang, time zone
+            
+            @return: returns a id of new record
+        """
+        context = context or {}
+        res_id = super(ProjectTaskWork, self).create(
+            cr, uid, vals, context=context)
+        self._update_extra_product_analytic(cr, uid, [res_id], context=context)    
+        return res_id
+
+    def write(self, cr, uid, ids, vals, context=None):
+        """ Update redord(s) comes in {ids}, with new value comes as {vals}
+            return True on success, False otherwise
+            @param cr: cursor to database
+            @param uid: id of current user
+            @param ids: list of record ids to be update
+            @param vals: dict of new values to be set
+            @param context: context arguments, like lang, time zone
+            
+            @return: True on success, False otherwise
+        """
+        context = context or {}        
+        res = super(ProjectTaskWork, self).write(
+            cr, uid, ids, vals, context=context)
+        self._update_extra_product_analytic(cr, uid, ids, context=context)    
+        return res
+
     # ---------
     # onchange:
     # ---------

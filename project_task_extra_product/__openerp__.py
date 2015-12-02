@@ -31,6 +31,8 @@
     'depends': [
         'base',
         'project',
+        'project_timesheet', # link task work with timesheet
+        'hr_timesheet_invoice', # invoice procedure
         ],
     'init_xml': [],
     'demo': [],
