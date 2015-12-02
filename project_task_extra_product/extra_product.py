@@ -44,8 +44,8 @@ class AccountAnalyticLine(orm.Model):
     _inherit = 'account.analytic.line'
     
     _columns = {
-        'extra_product_id': fields.many2one('product.product', 'Product', 
-            ondelete='set null'),
+        'extra_product_id': fields.many2one('project.project.pricelist', 
+            'Performance', ondelete='set null'),
         'extra_qty': fields.integer('Q.ty'),
         }
 
@@ -54,6 +54,7 @@ class ProjectProjectPricelist(orm.Model):
     '''
     _name = 'project.project.pricelist'
     _description = 'Project pricelist'
+    _rec_name = 'product_id'
     
     # Onchange:
     def onchange_product_id(self, cr, uid, ids, product_id, context=None):
@@ -146,28 +147,9 @@ class ProjectTaskWork(osv.osv):
         self._update_extra_product_analytic(cr, uid, ids, context=context)    
         return res
 
-    # ---------
-    # onchange:
-    # ---------
-    def onchange_create_domain(self, cr, uid, ids, project_id, context=None):
-        ''' Set domain in product
-        '''
-        # TODO non funziona!!
-        res = {}
-        res['value'] = {}
-        res['domain'] = {}
-        if not project_id:
-            res['domain']['product_id'] = [('id', 'in', ())]
-            return res
-        project_proxy = self.pool.get('project.project').browse(
-            cr, uid, project_id, context=context)
-        product_ids = [item.id for item in project_proxy.pricelist_ids]
-        res['domain']['product_id'] = [('id', 'in', product_ids)]
-        return res
-        
     _columns = {
-        'extra_product_id': fields.many2one('product.product', 'Product', 
-            ondelete='set null'),
+        'extra_product_id': fields.many2one('project.project.pricelist', 
+            'Performance', ondelete='set null'),
         'extra_qty': fields.integer('Q.ty'),
         }
 

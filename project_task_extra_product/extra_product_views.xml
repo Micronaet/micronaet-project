@@ -1,21 +1,25 @@
 <?xml version="1.0"?>
 <openerp>
-    <data>
+    <data>    
+        <record id="view_account_analytic_line_extra_form" model="ir.ui.view">
+            <field name="name">account.analytic.line.extra.form</field>
+            <field name="model">account.analytic.line</field>
+            <field name="inherit_id" ref="account.view_account_analytic_line_form"/>
+            <field name="arch" type="xml">
+                <field name="user_id" position="after">
+                    <field name="extra_product_id" readonly="1"/>
+                    <field name="extra_qty" readonly="1"/>
+                </field>
+            </field>
+        </record>    
+    
         <record id="view_task_extraform2" model="ir.ui.view">
             <field name="name">project.task.extra.form</field>
             <field name="model">project.task</field>
             <field name="inherit_id" ref="project.view_task_form2"/>
             <field name="arch" type="xml">
-                <!--set domain:-->
-                <xpath expr="//field[@name='work_ids']/tree/field[@name='hours']" position="attributes">
-                   <attribute name="on_change">onchange_create_domain(parent.project_id)</attribute>
-                </xpath>
-                <xpath expr="//field[@name='work_ids']/tree/field[@name='name']" position="attributes">
-                   <attribute name="on_change">onchange_create_domain(parent.project_id)</attribute>
-                </xpath>
-            
                 <xpath expr="//field[@name='work_ids']/tree/field[@name='hours']" position="after">
-                    <field name="extra_product_id" />
+                    <field name="extra_product_id" domain="[('project_id', '=', parent.project_id)]"/>
                     <field name="extra_qty" />
                 </xpath>
             </field>
