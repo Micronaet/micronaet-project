@@ -7,8 +7,8 @@
             <field name="inherit_id" ref="account.view_account_analytic_line_form"/>
             <field name="arch" type="xml">
                 <field name="user_id" position="after">
-                    <field name="extra_product_id" readonly="1"/>
-                    <field name="extra_qty" readonly="1"/>
+                    <field name="extra_product_id" readonly="1" attrs="{'invisible':[('extra_product_id','=',False)]}"/>
+                    <field name="extra_qty" readonly="1" attrs="{'invisible':[('extra_product_id','=',False)]}"/>
                 </field>
             </field>
         </record>    
