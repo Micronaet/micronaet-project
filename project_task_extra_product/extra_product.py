@@ -49,7 +49,6 @@ class AccountAnalyticLine(orm.Model):
     # Override function for get unit price of product / employee
     def _get_invoice_price(self, cr, uid, account, product_id, user_id, qty, 
             context=None):
-        import pdb; pdb.set_trace()
         context = context or {}
         pro_price_obj = self.pool.get('product.pricelist')
         pricelist = account.pricelist_id or \
@@ -95,7 +94,6 @@ class AccountAnalyticLine(orm.Model):
         elif journal_type == 'general' and product_id: 
             # timesheets, use sale price
             # NEW: Check extra product:
-            import pdb; pdb.set_trace()
             if l.extra_product_id:
                 unit_price = l.extra_product_id.pricelist                
             else:
