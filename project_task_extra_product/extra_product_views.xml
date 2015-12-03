@@ -1,6 +1,18 @@
 <?xml version="1.0"?>
 <openerp>
     <data>    
+
+        <record id="view_view_task_form2_extra_form" model="ir.ui.view">
+            <field name="name">project.task.extra.form</field>
+            <field name="model">project.task</field>
+            <field name="inherit_id" ref="project.view_task_form2"/>
+            <field name="arch" type="xml">
+                <field name="work_ids" position="attributes">
+                    <attribute name="readonly">1</attribute>
+                </field>
+            </field>
+        </record>    
+    
         <!--account.analytic.line-->
         <record id="view_account_analytic_line_extra_form" model="ir.ui.view">
             <field name="name">account.analytic.line.extra.form</field>
