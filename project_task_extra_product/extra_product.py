@@ -102,9 +102,14 @@ class HrAnalyticTimesheet(orm.Model):
     '''
     _inherit = 'hr.analytic.timesheet'
     
-    def _get_to_factor_id(self, cr, uid, factor=100, context=None):
+    def _get_to_factor_id(self, cr, uid, vals, context=None):
         ''' Find invoice all
         '''
+        if vals.get('extra_product_id', False):
+            factor = 100
+        else:
+            factor = 0
+
         if factor == 100:
             factor = 0
             name = 'Yes (100%)'
@@ -136,13 +141,9 @@ class HrAnalyticTimesheet(orm.Model):
             @return: returns a id of new record
         """
         context = context or {}
-        if vals.get('extra_product_id', False):
-            factor = 100
-        else:
-            factor = 0
-            
-        vals['to_invoice'] = self._get_to_factor_id(cr, uid, factor, 
+        vals['to_invoice'] = self._get_to_factor_id(cr, uid, vals, 
             context=context)
+
         res_id = super(HrAnalyticTimesheet, self).create(
             cr, uid, vals, context=context)
 
@@ -169,11 +170,32 @@ class HrAnalyticTimesheet(orm.Model):
             
             @return: True on success, False otherwise
         """
-        # TODO change place for setup "Yes 100%"
-        vals['to_invoice'] = self._get_to_factor_id(cr, uid, context=context)
+        # Load if not present:
+        item_proxy = self.browse(cr, uid, ids, context=context)[0]
+        if not vals.get('extra_product_id', False):
+            vals['extra_product_id'] = item_proxy.extra_product_id.id or False
+        
+        vals['to_invoice'] = self._get_to_factor_id(cr, uid, vals, 
+            context=context)
         
         res = super(HrAnalyticTimesheet, self).write(
             cr, uid, ids, vals, context=context)
+
+        # TODO if change task delete line!!!
+        # TODO Unlink method!!!
+        # Update task work:
+        task_id = vals.get('project_task_id', False)
+        if task_id:
+            context['hr_analytic_timesheet_id'] = res_id
+            self.pool.get('project.task.work').create(cr, uid, {
+                'task_id': task_id,
+                'name': vals.get('name', False),
+                'hours': vals.get('unit_amount', False),
+                'date': vals.get('date', False),
+                'user_id': vals.get('user_id', False),
+                }, context=context)
+        return res_id
+            
         return res
     
     # ----------
