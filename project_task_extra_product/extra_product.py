@@ -122,8 +122,7 @@ class HrAnalyticTimesheet(orm.Model):
             context=context)
         if factor_ids:
             return factor_ids[0]    
-        else:
-            # Create
+        else: # Create
             return factor_pool.create(cr, uid, {
                 'factor': factor,
                 'name': name,
@@ -144,6 +143,7 @@ class HrAnalyticTimesheet(orm.Model):
         vals['to_invoice'] = self._get_to_factor_id(cr, uid, vals, 
             context=context)
 
+        #['no_analytic_entry']
         res_id = super(HrAnalyticTimesheet, self).create(
             cr, uid, vals, context=context)
 
@@ -172,31 +172,28 @@ class HrAnalyticTimesheet(orm.Model):
         """
         # Load if not present:
         item_proxy = self.browse(cr, uid, ids, context=context)[0]
-        if not vals.get('extra_product_id', False):
-            vals['extra_product_id'] = item_proxy.extra_product_id.id or False
-        
-        vals['to_invoice'] = self._get_to_factor_id(cr, uid, vals, 
-            context=context)
+        if vals.get('extra_product_id', False):
+            vals['to_invoice'] = self._get_to_factor_id(cr, uid, vals, 
+                context=context)
         
         res = super(HrAnalyticTimesheet, self).write(
             cr, uid, ids, vals, context=context)
 
-        # TODO if change task delete line!!!
-        # TODO Unlink method!!!
         # Update task work:
-        task_id = vals.get('project_task_id', False)
-        if task_id:
-            context['hr_analytic_timesheet_id'] = res_id
-            self.pool.get('project.task.work').create(cr, uid, {
-                'task_id': task_id,
-                'name': vals.get('name', False),
-                'hours': vals.get('unit_amount', False),
-                'date': vals.get('date', False),
-                'user_id': vals.get('user_id', False),
+        work_ids = self.pool.get('project.task.work').search(cr, uid, [
+            ('hr_analytic_timesheet_id', '=', ids[0])], context=context)
+        if work_ids:
+            context['hr_analytic_timesheet_id'] = ids[0]
+            self.pool.get('project.task.work').write(cr, uid, work_ids[0], {
+                'task_id': vals.get(
+                    'project_task_id', item_proxy.project_task_id.id),
+                'name': vals.get('name', item_proxy.name),
+                'hours': vals.get('unit_amount', item_proxy.hours),
+                'date': vals.get('date', item_proxy.date),
+                'user_id': vals.get('user_id', item_proxy.user_id.id),
                 }, context=context)
-        return res_id
-            
-        return res
+        return True
+    # TODO Unlink method!!!
     
     # ----------
     # On Change:
