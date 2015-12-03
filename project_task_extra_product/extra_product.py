@@ -103,25 +103,27 @@ class HrAnalyticTimesheet(orm.Model):
     '''
     _inherit = 'hr.analytic.timesheet'
     
-    def _get_to_factor_id(self, cr, uid, total=100, context=None):
+    def _get_to_factor_id(self, cr, uid, factor=100, context=None):
         ''' Find invoice all
         '''
-        if total == 100:
+        if factor == 100:
+            factor = 0
             name = 'Yes (100%)'
         else: # 0    
+            factor = 100
             name = 'No (0%)'
             
         factor_pool = self.pool.get('hr_timesheet_invoice.factor')
-        factor_ids = factor_pool.search(cr, uid, [('name', '=', name)],
+        factor_ids = factor_pool.search(cr, uid, [('factor', '=', factor)],
             context=context)
         if factor_ids:
             return factor_ids[0]    
         else:
             # Create
             return factor_pool.create(cr, uid, {
-                'factor': 100 - total,
+                'factor': factor,
                 'name': name,
-                'customer_name': '%s%s' (total, '%'),
+                'customer_name': '%s%s' % (factor, '%'),
                 }, context=context)
     
     # Override for check creation of project.task.work
@@ -188,7 +190,7 @@ class HrAnalyticTimesheet(orm.Model):
         if not account_id:
             return res
 
-        # Search account_id
+        # Search account_id:
         project_pool = self.pool.get('project.project')
         project_ids = project_pool.search(cr, uid, [
             ('analytic_account_id', '=', account_id)], context=context)

@@ -54,7 +54,7 @@ class AccountAnalyticLine(orm.Model):
             @return: returns a id of new record
         """
         # Find partner for save in mirror partner
-        if 'analytic_account_id' not in vals:
+        if 'analytic_partner_id' not in vals:
             account_pool = self.pool.get('account.analytic.account')
             account_proxy = account_pool.browse(cr, uid, vals['account_id'], 
                 context=context)
@@ -80,6 +80,7 @@ class AccountAnalyticLine(orm.Model):
             account_pool = self.pool.get('account.analytic.account')
             account_proxy = account_pool.browse(cr, uid, vals['account_id'], 
                 context=context)
+            import pdb; pdb.set_trace()
             vals['analytic_partner_id'] = account_proxy.partner_id.id or False
         
         res = super(AccountAnalyticLine, self).write(
@@ -389,7 +390,7 @@ class HrAnalyticTimesheet(orm.Model):
         res = {}
         if not account_id or not analytic_partner_id:
             return res
-        
+
         acc_partner_id = self.pool('account.analytic.account').browse(
             cr, uid, account_id, context=context).partner_id.id
          
