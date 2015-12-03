@@ -1,0 +1,77 @@
+<?xml version="1.0"?>
+<openerp>
+    <data>
+
+        <!-- account.analitic.line -->
+        <record model="ir.ui.view" id="view_account_analytic_line_tree_partner">
+            <field name="name">account.analytic.line.partner.tree</field>
+            <field name="model">account.analytic.line</field>
+            <field name="inherit_id" ref="account.view_account_analytic_line_tree"/>
+            <field name="arch" type="xml">        
+                <field name="account_id" position="before">
+                    <field name="analytic_partner_id" />
+                </field>
+            </field>
+        </record>
+        <record model="ir.ui.view" id="view_account_analytic_line_form_partner">
+            <field name="name">account.analytic.line.partner.form</field>
+            <field name="model">account.analytic.line</field>
+            <field name="inherit_id" ref="account.view_account_analytic_line_form"/>
+            <field name="arch" type="xml">        
+                <field name="account_id" position="before">
+                    <field name="analytic_partner_id" />
+                </field>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="view_account_analytic_line_filter_partner">
+            <field name="name">account.analytic.line.partner.search</field>
+            <field name="model">account.analytic.line</field>
+            <field name="inherit_id" ref="account.view_account_analytic_line_filter"/>
+            <field name="arch" type="xml">        
+                <field name="account_id" position="before">
+                    <field name="analytic_partner_id" />
+                </field>
+            </field>
+        </record>
+                
+        <!--hr.analytic.timesheet-->
+        <record model="ir.ui.view" id="view_hr_timesheet_line_tree">
+            <field name="name">hr.analytic.timesheet.partner.tree</field>
+            <field name="model">hr.analytic.timesheet</field>
+            <field name="inherit_id" ref="hr_timesheet.hr_timesheet_line_tree"/>
+            <field name="arch" type="xml">        
+                <field name="account_id" position="before">
+                    <field name="analytic_partner_id" required="1" domain="[('is_company', '=', True)]" on_change="onchange_partner_id(analytic_partner_id, account_id)" options="{'no_create': True}"/>
+                </field>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="view_hr_timesheet_line_tree2">
+            <field name="name">hr.analytic.timesheet.partner.tree</field>
+            <field name="model">hr.analytic.timesheet</field>
+            <field name="inherit_id" ref="hr_timesheet_invoice.hr_timesheet_line_tree2"/>
+            <field name="arch" type="xml">        
+                <field name="account_id" position="attributes">
+                    <attribute name="domain">[('type','in',('normal','contract')),('use_timesheets','=',1),'|',('partner_id','=',False),('partner_id','=',analytic_partner_id)]</attribute>
+                </field>
+            </field>
+        </record>
+
+        <!--'default_partner_id': partner_id-->
+        <record model="ir.ui.view" id="view_hr_timesheet_line_search">
+            <field name="name">hr.analytic.timesheet.partner.search</field>
+            <field name="model">hr.analytic.timesheet</field>
+            <field name="inherit_id" ref="hr_timesheet.hr_timesheet_line_search"/>
+            <field name="arch" type="xml">        
+                <field name="account_id" position="before">
+                    <field name="analytic_partner_id"/>
+                </field>                
+                <filter string="Product" position="after">
+                   <filter string="Partner" icon="terp-accessories-archiver" domain="[]" context="{'group_by':'analytic_partner_id'}"/>
+                </filter>                
+            </field>
+        </record>
+    </data>
+</openerp>
+
