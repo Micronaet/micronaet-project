@@ -80,7 +80,6 @@ class AccountAnalyticLine(orm.Model):
             account_pool = self.pool.get('account.analytic.account')
             account_proxy = account_pool.browse(cr, uid, vals['account_id'], 
                 context=context)
-            import pdb; pdb.set_trace()
             vals['analytic_partner_id'] = account_proxy.partner_id.id or False
         
         res = super(AccountAnalyticLine, self).write(
