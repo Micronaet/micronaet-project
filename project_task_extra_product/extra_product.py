@@ -176,9 +176,9 @@ class HrAnalyticTimesheet(orm.Model):
         item_proxy = self.browse(cr, uid, ts_id, context=context)
         
         # to invoice check:
-        if vals.get('extra_product_id', False):
-            vals['to_invoice'] = self._get_to_factor_id(cr, uid, vals, 
-                context=context)
+        if vals.get('extra_product_id', item_proxy.extra_product_id.id):
+        vals['to_invoice'] = self._get_to_factor_id(cr, uid, vals, 
+            context=context)
         
         res = super(HrAnalyticTimesheet, self).write(
             cr, uid, ids, vals, context=context)
@@ -500,21 +500,6 @@ class AccountAnalyticAccount(orm.Model):
     ''' Add relation field to project / account analytic account
     '''
     _inherit = 'account.analytic.account'
-    
-    """def _get_project_account_id(self, cr, uid, ids, fields, args, 
-            context=None):
-        ''' Fields function for calculate 
-        '''    
-        res = {}
-        project_pool = self.pool.get('project.project')
-        for account_id in ids:
-            try:
-                res[account_id] = project_pool.search(cr, uid, [
-                    ('analytic_account_id', '=', account_id)], 
-                    context=context)[0]
-            except:
-                res[account_id] = False
-        return res"""
 
     _columns = {
         'pricelist_ids': fields.one2many('account.analytic.account.pricelist', 
@@ -524,15 +509,4 @@ class AccountAnalyticAccount(orm.Model):
         #    relation='project.project', store=True
         #    ),                         
         }
-
-"""class ProjectTaskWork(orm.Model):
-    ''' Add event to timesheet
-    '''
-    _inherit = 'project.task.work'
-    
-    _columns = {
-        'analytic_extra_line_ids': fields.one2many('hr.analytic.timesheet', 
-            'project_task_id', 'Timesheet'),
-        }
-"""
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

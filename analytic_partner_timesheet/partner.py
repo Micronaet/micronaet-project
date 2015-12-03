@@ -399,7 +399,12 @@ class HrAnalyticTimesheet(orm.Model):
         
         # Partner different:    
         res['value'] = {}
-        res['value']['account_id'] = False # Reset account 
+        # Reset all
+        res['value']['account_id'] = False
+        res['value']['project_task_id'] = False
+        res['value']['extra_product_id'] = False
+        res['value']['extra_qty'] = False 
+        
         return res
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
