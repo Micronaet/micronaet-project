@@ -39,7 +39,7 @@
     'init_xml': [],
     'demo': [],
     'data': [
-        #'security/ir.model.access.csv',    
+        'security/ir.model.access.csv',    
         'extra_product_views.xml',
         ],
     'active': False,

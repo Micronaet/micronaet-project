@@ -18,23 +18,12 @@
             <field name="model">hr.analytic.timesheet</field>
             <field name="inherit_id" ref="hr_timesheet.hr_timesheet_line_tree"/>
             <field name="arch" type="xml">
-                <field name="amoount" position="after">
-                    <field name="extra_product_id" domain="[('project_id', '=', parent.project_id)]"/>
-                    <field name="extra_qty" />
-                </xpath>
+                <field name="amount" position="after">
+                    <field name="extra_product_id" domain="[('account_id', '=', account_id)]"/>
+                    <field name="extra_qty" attrs="{'required': [('extra_product_id', '!=', False)]}" on_change="onchange_extra_product_id(product_id)"/>
+                </field>
             </field>
         </record>
-        <!--<record id="view_task_extraform2" model="ir.ui.view">
-            <field name="name">project.task.extra.form</field>
-            <field name="model">project.task</field>
-            <field name="inherit_id" ref="project.view_task_form2"/>
-            <field name="arch" type="xml">
-                <xpath expr="//field[@name='work_ids']/tree/field[@name='hours']" position="after">
-                    <field name="extra_product_id" domain="[('project_id', '=', parent.project_id)]"/>
-                    <field name="extra_qty" />
-                </xpath>
-            </field>
-        </record>-->
         
         <record model="ir.ui.view" id="view_account_analytic_account_pricelist_form">
             <field name="name">project.project.pricelist.form</field>
@@ -64,35 +53,6 @@
                 </xpath>
             </field>
         </record>
-        <!--<record model="ir.ui.view" id="view_project_project_pricelist_form">
-            <field name="name">project.project.pricelist.form</field>
-            <field name="model">project.project</field>
-            <field name="inherit_id" ref="project.edit_project"/>
-            <field name="arch" type="xml">
-                <xpath expr="//page[@string='Team']" position="after">
-                    <page string="Pricelist">
-                        <field name="pricelist_ids">
-                           <tree string="Pricelist" editable="bottom">
-                               <field name="product_id" context="{'default_type':'service'}" on_change="onchange_product_id(product_id)"/>
-                               <field name="pricelist"/>
-                               <field name="note"/>
-                           </tree>
-                           <form string="Pricelist" version="7.0">
-                               <sheet>
-                                   <group col="4">
-                                       <field name="product_id" context="{'default_type':'service'}"/>
-                                       <field name="pricelist"/>
-                                       <separator string="Note" colspan="4"/>
-                                       <field name="note" colspan="4" nolabel="1"/>
-                                   </group>
-                               </sheet>
-                           </form>
-                        </field>
-                    </page>            
-                </xpath>
-            </field>
-        </record>-->
-        
     </data>
 </openerp>
 
