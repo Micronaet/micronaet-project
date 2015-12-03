@@ -38,21 +38,61 @@ from openerp.tools import (DEFAULT_SERVER_DATE_FORMAT,
 
 _logger = logging.getLogger(__name__)
 
+class ProjectProjectPricelist(orm.Model):
+    ''' Pricelist linked to project
+    '''
+    _name = 'account.analytic.account.pricelist'
+    _description = 'Account pricelist'
+    _rec_name = 'product_id'
+    
+    # Onchange:
+    def onchange_product_id(self, cr, uid, ids, product_id, context=None):
+        ''' On change product write pricelist 
+        '''
+        res = {}
+        res['value'] = {}
+        if not product_id:
+           res['value']['pricelist'] = False
+           return res
+
+        product_pool = self.pool.get('product.product')
+        product_proxy = product_pool.browse(
+            cr, uid, product_id, context=context)
+        res['value']['pricelist'] = product_proxy.lst_price
+        return res
+    
+    # -------------------------------------------------------------------------
+    #                           Postgres table:
+    # -------------------------------------------------------------------------
+    _columns = {
+        'product_id': fields.many2one('product.product', 'Product', 
+            required=True, ondelete='set null', 
+            domain=[('type', '=', 'service')]),
+        'account_id': fields.many2one('account.analytic.account', 'Account', 
+            ondelete='cascade'),
+        'note': fields.text('Note'),
+        'pricelist': fields.float('Pricelist', digits=(16, 2), required=True), 
+        }
+
 class HrAnalyticTimesheet(orm.Model):
     ''' Add event to timesheet
     '''
     _inherit = 'hr.analytic.timesheet'
     
+    # ----------
     # On Change:
-    def onchange_extra_product_id(self, cr, uid, ids, product_pl_id, 
+    # ----------
+    def onchange_extra_product_id(self, cr, uid, ids, extra_product_id, 
             context=None):
         ''' Write price used for this product in project pricelist
         '''   
         res = {}
+        if not extra_product_id:
+            return res
         res['value'] = {}
         pl_pool = self.pool.get('account.analytic.account.pricelist')
         res['value']['extra_qty'] = pl_pool.browse(
-            cr, uid, product_pl_id, context=context).pricelist        
+            cr, uid, extra_product_id, context=context).pricelist        
         return res
     
 class AccountAnalyticLine(orm.Model):
@@ -294,47 +334,12 @@ class AccountAnalyticLine(orm.Model):
         return invoices
 
     _columns = {
-        'extra_product_id': fields.many2one('project.project.pricelist', 
+        'extra_product_id': fields.many2one(
+            'account.analytic.account.pricelist', 
             'Performance', ondelete='set null'),
         'extra_qty': fields.integer('Q.ty'),
         }
 
-class ProjectProjectPricelist(orm.Model):
-    ''' Pricelist linked to project
-    '''
-    _name = 'account.analytic.account.pricelist'
-    _description = 'Account pricelist'
-    _rec_name = 'product_id'
-    
-    # Onchange:
-    def onchange_product_id(self, cr, uid, ids, product_id, context=None):
-        ''' On change product write pricelist 
-        '''
-        res = {}
-        res['value'] = {}
-        if not product_id:
-           res['value']['pricelist'] = False
-           return res
-
-        product_pool = self.pool.get('product.product')
-        product_proxy = product_pool.browse(
-            cr, uid, product_id, context=context)
-        res['value']['pricelist'] = product_proxy.lst_price
-        return res
-    
-    # -------------------------------------------------------------------------
-    #                           Postgres table:
-    # -------------------------------------------------------------------------
-    _columns = {
-        'product_id': fields.many2one('product.product', 'Product', 
-            required=True, ondelete='set null', 
-            domain=[('type', '=', 'service')]),
-        'account_id': fields.many2one('account.analytic.account', 'Account', 
-            ondelete='cascade'),
-        'note': fields.text('Note'),
-        'pricelist': fields.float('Pricelist', digits=(16, 2), required=True), 
-        }
-        
 class AccountAnalyticAccount(orm.Model):
     ''' Add relation field to project / account analytic account
     '''
