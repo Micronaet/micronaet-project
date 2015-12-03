@@ -81,16 +81,19 @@ class ProjectTaskWork(orm.Model):
     _inherit = 'project.task.work'
 
     def create(self, cr, uid, vals, *args, **kwargs):
+        import pdb; pdb.set_trace()
         if 'context' not in kwargs:
             kwargs['context'] = {}
 
         context = kwargs.get('context', {})
-        kwargs['context']['no_analytic_entry'] = True # Never create!
-
+        #kwargs['context']['no_analytic_entry'] = True # Never create!
+        ts_id = kwargs['context'].get('hr_analytic_timesheet_id', False)
+        if ts_id:
+            kwargs['context']['no_analytic_entry'] = True # No creation
+        
         res_id = super(ProjectTaskWork, self).create(
             cr, uid, vals, *args, **kwargs)
         
-        ts_id = kwargs['context']['hr_analytic_timesheet_id']
         if ts_id:
             self.write(cr, uid, res_id, {
                 'hr_analytic_timesheet_id': ts_id,
