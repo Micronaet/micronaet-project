@@ -314,14 +314,26 @@ class ProjectProjectPricelist(orm.Model):
             domain=[('type', '=', 'service')]),
         'project_id': fields.many2one('project.project', 'Project', 
             ondelete='cascade'),
+        'account_id': fields.many2one('account.analytic.account', 'Account', 
+            ondelete='cascade'),
         'note': fields.text('Note'),
         'pricelist': fields.float('Pricelist', digits=(16, 2), required=True), 
         }
         
-class ProjectProject(orm.Model):
-    ''' Add relation field to project
+#class ProjectProject(orm.Model):
+#    ''' Add relation field to project
+#    '''
+#    _inherit = 'project.project'
+#    
+#    _columns = {
+#        'pricelist_ids': fields.one2many('project.project.pricelist', 
+#             'project_id', 'Pricelist'),             
+#        }
+
+class AccountAnalyticAccount(orm.Model):
+    ''' Add relation field to project / account analytic account
     '''
-    _inherit = 'project.project'
+    _inherit = 'account.analytic.account'
     
     _columns = {
         'pricelist_ids': fields.one2many('project.project.pricelist', 
