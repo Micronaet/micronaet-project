@@ -74,14 +74,108 @@ class ProjectProjectPricelist(orm.Model):
         'pricelist': fields.float('Pricelist', digits=(16, 2), required=True), 
         }
 
+class ProjectTaskWork(orm.Model):
+    ''' Add event to timesheet, override CRUD operation for manage creation 
+        from analytic timesheet
+    '''
+    _inherit = 'project.task.work'
+
+    def create(self, cr, uid, vals, *args, **kwargs):
+        if 'context' not in kwargs:
+            kwargs['context'] = {}
+
+        context = kwargs.get('context', {})
+        kwargs['context']['no_analytic_entry'] = True # Never create!
+
+        res_id = super(ProjectTaskWork, self).create(
+            cr, uid, vals, *args, **kwargs)
+        
+        ts_id = kwargs['context']['hr_analytic_timesheet_id']
+        if ts_id:
+            self.write(cr, uid, res_id, {
+                'hr_analytic_timesheet_id': ts_id,
+                }, context=context)
+        return res_id
+
+
 class HrAnalyticTimesheet(orm.Model):
     ''' Add event to timesheet
     '''
     _inherit = 'hr.analytic.timesheet'
     
+    # Override for check creation of project.task.work
+    def create(self, cr, uid, vals, context=None):
+        """ Create a new record for a model ClassName
+            @param cr: cursor to database
+            @param uid: id of current user
+            @param vals: provides a data for new record
+            @param context: context arguments, like lang, time zone
+            
+            @return: returns a id of new record
+        """
+        context = context or {}
+        res_id = super(HrAnalyticTimesheet, self).create(
+            cr, uid, vals, context=context)
+
+        task_id = vals.get('project_task_id', False)
+        if task_id:
+            context['hr_analytic_timesheet_id'] = res_id
+            self.pool.get('project.task.work').create(cr, uid, {
+                'task_id': task_id,
+                'name': vals.get('name', False),
+                'hours': vals.get('hours', False),
+                'date': vals.get('nadateme', False),
+                'user_id': vals.get('user_id', False),
+                }, context=context)
+        return res_id
+
+    def write(self, cr, uid, ids, vals, context=None):
+        """ Update redord(s) comes in {ids}, with new value comes as {vals}
+            return True on success, False otherwise
+            @param cr: cursor to database
+            @param uid: id of current user
+            @param ids: list of record ids to be update
+            @param vals: dict of new values to be set
+            @param context: context arguments, like lang, time zone
+            
+            @return: True on success, False otherwise
+        """
+        res = super(HrAnalyticTimesheet, self).write(
+            cr, user, ids, vals, context=context)
+        #if 'project_task_id' in vals:
+        #    import pdb; pdb.set_trace()    
+        #    self.pool.get('project.task.work').write(cr, uid, {
+        #        #
+        #        }, context=context)
+        return res
+        
+    
     # ----------
     # On Change:
     # ----------
+    def on_change_account_id(self, cr, uid, ids, account_id, user_id, 
+            context=None):    
+        ''' Add domain filter for tasks
+        '''
+        res = super(HrAnalyticTimesheet, self).on_change_account_id(
+            cr, uid, ids, account_id, user_id)
+        
+        if not account_id:
+            return res
+
+        # Search account_id
+        project_pool = self.pool.get('project.project')
+        project_ids = project_pool.search(cr, uid, [
+            ('analytic_account_id', '=', account_id)], context=context)
+        if not project_ids:
+            return res
+
+        if 'domain' not in res:
+            res['domain'] = {
+                'project_task_id': [('project_id', '=', project_ids[0])]}
+
+        return res
+        
     def onchange_extra_product_id(self, cr, uid, ids, extra_product_id, 
             context=None):
         ''' Write price used for this product in project pricelist
@@ -242,7 +336,7 @@ class AccountAnalyticLine(orm.Model):
         # prepare for iteration on journal and accounts
         for line in self.browse(cr, uid, ids, context=context):
             # Jump account with recurrent invoice:
-            if line.account_id.recurring_invoice:
+            if line.account_id.recurring_invoices:
                 continue # Jump recurring invoice
 
             # NEW: Get pricelist from account or partner:
@@ -342,6 +436,8 @@ class AccountAnalyticLine(orm.Model):
             'account.analytic.account.pricelist', 
             'Performance', ondelete='set null'),
         'extra_qty': fields.integer('Q.ty'),
+        'project_task_id': fields.many2one(
+            'project.task', 'Task', ondelete='set null'),
         }
 
 class AccountAnalyticAccount(orm.Model):
@@ -349,8 +445,38 @@ class AccountAnalyticAccount(orm.Model):
     '''
     _inherit = 'account.analytic.account'
     
+    """def _get_project_account_id(self, cr, uid, ids, fields, args, 
+            context=None):
+        ''' Fields function for calculate 
+        '''    
+        res = {}
+        project_pool = self.pool.get('project.project')
+        for account_id in ids:
+            try:
+                res[account_id] = project_pool.search(cr, uid, [
+                    ('analytic_account_id', '=', account_id)], 
+                    context=context)[0]
+            except:
+                res[account_id] = False
+        return res"""
+
     _columns = {
         'pricelist_ids': fields.one2many('account.analytic.account.pricelist', 
-             'account_id', 'Pricelist'),             
+             'account_id', 'Pricelist'),
+        #'project_id': fields.function(_get_project_account_id, 
+        #    method=True, type='many2one', string='Project', 
+        #    relation='project.project', store=True
+        #    ),                         
         }
+
+"""class ProjectTaskWork(orm.Model):
+    ''' Add event to timesheet
+    '''
+    _inherit = 'project.task.work'
+    
+    _columns = {
+        'analytic_extra_line_ids': fields.one2many('hr.analytic.timesheet', 
+            'project_task_id', 'Timesheet'),
+        }
+"""
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
