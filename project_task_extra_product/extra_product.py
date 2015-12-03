@@ -114,6 +114,7 @@ class HrAnalyticTimesheet(orm.Model):
             factor = 0
             name = 'Yes (100%)'
         else: # 0    
+            return False # TODO test if works better!!!!
             factor = 100
             name = 'No (0%)'
             
@@ -217,7 +218,6 @@ class HrAnalyticTimesheet(orm.Model):
             
             @return: True on success, False otherwise
         """
-        import pdb; pdb.set_trace()
         query = '''
             DELETE from project_task_work
             WHERE hr_analytic_timesheet_id in %s;           
