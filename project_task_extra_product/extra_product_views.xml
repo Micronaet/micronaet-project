@@ -37,7 +37,7 @@
                     <field name="project_task_id" domain="[('project_id', '=', 0)]" />
                     
                     <field name="extra_product_id" domain="[('account_id', '=', account_id)]"/>
-                    <field name="extra_qty" attrs="{'required': [('extra_product_id', '!=', False)]}" on_change="onchange_extra_product_id(extra_product_id)"/>
+                    <field name="extra_qty" attrs="{'required': [('extra_product_id', '!=', False)]}" />
                 </field>
             </field>
         </record>
