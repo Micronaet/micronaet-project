@@ -147,6 +147,7 @@ class HrAnalyticTimesheet(orm.Model):
         res_id = super(HrAnalyticTimesheet, self).create(
             cr, uid, vals, context=context)
 
+        # Create task work if there's task selected:
         task_id = vals.get('project_task_id', False)
         if task_id:
             context['hr_analytic_timesheet_id'] = res_id
@@ -171,7 +172,10 @@ class HrAnalyticTimesheet(orm.Model):
             @return: True on success, False otherwise
         """
         # Load if not present:
-        item_proxy = self.browse(cr, uid, ids, context=context)[0]
+        ts_id = ids[0]
+        item_proxy = self.browse(cr, uid, ts_id, context=context)
+        
+        # to invoice check:
         if vals.get('extra_product_id', False):
             vals['to_invoice'] = self._get_to_factor_id(cr, uid, vals, 
                 context=context)
@@ -179,16 +183,23 @@ class HrAnalyticTimesheet(orm.Model):
         res = super(HrAnalyticTimesheet, self).write(
             cr, uid, ids, vals, context=context)
 
-        # Update task work:
-        work_ids = self.pool.get('project.task.work').search(cr, uid, [
-            ('hr_analytic_timesheet_id', '=', ids[0])], context=context)
+        # Delete and recreate:
+        work_pool = self.pool.get('project.task.work')            
+        work_ids = work_pool.search(cr, uid, [
+            ('hr_analytic_timesheet_id', '=', ts_id)], context=context)
         if work_ids:
-            context['hr_analytic_timesheet_id'] = ids[0]
-            self.pool.get('project.task.work').write(cr, uid, work_ids[0], {
-                'task_id': vals.get(
-                    'project_task_id', item_proxy.project_task_id.id),
+            work_id = work_ids[0]
+            context['no_analytic_entry'] = True
+            task_id = vals.get('project_task_id', 
+                item_proxy.project_task_id.id)
+            cr.execute(
+                'DELETE from project_task_work where id = %s' % work_id)
+
+            context['hr_analytic_timesheet_id'] = ts_id
+            self.pool.get('project.task.work').create(cr, uid, {
+                'task_id': task_id,
                 'name': vals.get('name', item_proxy.name),
-                'hours': vals.get('unit_amount', item_proxy.hours),
+                'hours': vals.get('unit_amount', item_proxy.unit_amount),
                 'date': vals.get('date', item_proxy.date),
                 'user_id': vals.get('user_id', item_proxy.user_id.id),
                 }, context=context)
