@@ -104,15 +104,18 @@ class AccountAnalyticLine(orm.Model):
                 product_id = data['product'][0]
             else:
                 product_id = data['product']
-            unit_price = self._get_invoice_price(cr, uid, account, product_id, user_id, total_qty, uom_context)
+            unit_price = self._get_invoice_price(
+                cr, uid, account, product_id, user_id, total_qty, uom_context)
         elif journal_type == 'general' and product_id:
             # timesheets, use sale price
-            unit_price = self._get_invoice_price(cr, uid, account, product_id, user_id, total_qty, uom_context)
+            unit_price = self._get_invoice_price(
+                cr, uid, account, product_id, user_id, total_qty, uom_context)
         else:
             # expenses, using price from amount field
             unit_price = total_price * -1.0 / total_qty
 
-        factor = self.pool['hr_timesheet_invoice.factor'].browse(cr, uid, factor_id, context=uom_context)
+        factor = self.pool['hr_timesheet_invoice.factor'].browse(
+            cr, uid, factor_id, context=uom_context)
         factor_name = factor.customer_name
         curr_invoice_line = {
             'price_unit': unit_price,
@@ -126,16 +129,23 @@ class AccountAnalyticLine(orm.Model):
         }
 
         if product_id:
-            product = product_obj.browse(cr, uid, product_id, context=uom_context)
-            factor_name = product_obj.name_get(cr, uid, [product_id], context=uom_context)[0][1]
+            product = product_obj.browse(
+                cr, uid, product_id, context=uom_context)
+            factor_name = product_obj.name_get(
+                cr, uid, [product_id], context=uom_context)[0][1]
             if factor.customer_name:
                 factor_name += ' - ' + factor.customer_name
 
                 general_account = product.property_account_income or product.categ_id.property_account_income_categ
                 if not general_account:
-                    raise osv.except_osv(_('Error!'), _("Configuration Error!") + '\n' + _("Please define income account for product '%s'.") % product.name)
+                    raise osv.except_osv(
+                        _('Error!'), 
+                        _("Configuration Error!") + '\n' + _(
+                            "Please define income account for product '%s'.") % product.name)
                 taxes = product.taxes_id or general_account.tax_ids
-                tax = self.pool['account.fiscal.position'].map_tax(cr, uid, account.partner_id.property_account_position, taxes)
+                tax = self.pool['account.fiscal.position'].map_tax(
+                    cr, uid, account.partner_id.property_account_position, 
+                    taxes)
                 curr_invoice_line.update({
                     'invoice_line_tax_id': [(6, 0, tax)],
                     'name': factor_name,
@@ -151,7 +161,8 @@ class AccountAnalyticLine(orm.Model):
                     details.append(line['date'])
                 if data.get('time', False):
                     if line['product_uom_id']:
-                        details.append("%s %s" % (line.unit_amount, line.product_uom_id.name))
+                        details.append("%s %s" % (
+                            line.unit_amount, line.product_uom_id.name))
                     else:
                         details.append("%s" % (line['unit_amount'], ))
                 if data.get('name', False):
@@ -159,10 +170,12 @@ class AccountAnalyticLine(orm.Model):
                 if details:
                     note.append(u' - '.join(map(lambda x: unicode(x) or '', details)))
             if note:
-                curr_invoice_line['name'] += "\n" + ("\n".join(map(lambda x: unicode(x) or '', note)))
+                curr_invoice_line['name'] += "\n" + (
+                    "\n".join(map(lambda x: unicode(x) or '', note)))
         return curr_invoice_line
     
-    def _prepare_cost_invoice(self, cr, uid, partner, company_id, currency_id, analytic_lines, context=None):
+    def _prepare_cost_invoice(self, cr, uid, partner, company_id, currency_id, 
+            analytic_lines, context=None):
         """ returns values used to create main invoice from analytic lines"""
         account_payment_term_obj = self.pool['account.payment.term']
         invoice_name = analytic_lines[0].account_id.name
@@ -366,54 +379,6 @@ class HrAnalyticTimesheet(orm.Model):
     '''
     _inherit = 'hr.analytic.timesheet'
 
-    def _get_yes_100(self, cr, uid, context=None):
-        ''' Find invoice all
-        '''
-        factor_pool = self.pool.get('hr_timesheet_invoice.factor')
-        factor_ids = factor_pool.search(cr, uid, [('name', '=', 'Yes (100%)')], 
-            context=context)
-        if factor_ids:
-            return factor_ids[0]    
-        else:
-            return 1    
-        #return self.pool.get(
-        #    'ir.model.data').get_object_reference(
-        #        cr, uid, 'hr_timesheet_invoice.factor', 
-        #        'timesheet_invoice_factor1') or False
-                
-    def create(self, cr, uid, vals, context=None):
-        """ Create a new record for a model ClassName
-            @param cr: cursor to database
-            @param uid: id of current user
-            @param vals: provides a data for new record
-            @param context: context arguments, like lang, time zone
-            
-            @return: returns a id of new record
-        """
-        vals['to_invoice'] = self._get_yes_100(cr, uid, context=context)
-    
-        res_id = super(HrAnalyticTimesheet, self).create(
-            cr, uid, vals, context=context)
-        return res_id
-    
-    def write(self, cr, uid, ids, vals, context=None):
-        """ Update redord(s) comes in {ids}, with new value comes as {vals}
-            return True on success, False otherwise
-            @param cr: cursor to database
-            @param uid: id of current user
-            @param ids: list of record ids to be update
-            @param vals: dict of new values to be set
-            @param context: context arguments, like lang, time zone
-            
-            @return: True on success, False otherwise
-        """
-        # TODO change place for setup "Yes 100%"
-        vals['to_invoice'] = self._get_yes_100(cr, uid, context=context)
-        
-        res = super(HrAnalyticTimesheet, self).write(
-            cr, uid, ids, vals, context=context)
-        return res
-    
     # ----------
     # on change:
     # ----------

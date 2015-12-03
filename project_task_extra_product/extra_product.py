@@ -103,6 +103,27 @@ class HrAnalyticTimesheet(orm.Model):
     '''
     _inherit = 'hr.analytic.timesheet'
     
+    def _get_yes_100(self, cr, uid, total=100, context=None):
+        ''' Find invoice all
+        '''
+        if total == 100:
+            name = 'Yes (100%)'
+        else: # 0    
+            name = 'No (0%)'
+            
+        factor_pool = self.pool.get('hr_timesheet_invoice.factor')
+        factor_ids = factor_pool.search(cr, uid, [('name', '=', name)], 
+            context=context)
+        if factor_ids:
+            return factor_ids[0]    
+        else:
+            # Create
+            return factor_pool.create(cr, uid, {
+                'factor': 100 - total,
+                'name': name,
+                'customer_name': '%s%s' (total, '%'),
+                }, context=context)
+    
     # Override for check creation of project.task.work
     def create(self, cr, uid, vals, context=None):
         """ Create a new record for a model ClassName
@@ -114,6 +135,7 @@ class HrAnalyticTimesheet(orm.Model):
             @return: returns a id of new record
         """
         context = context or {}
+        vals['to_invoice'] = self._get_yes_100(cr, uid, context=context)
         res_id = super(HrAnalyticTimesheet, self).create(
             cr, uid, vals, context=context)
 
@@ -123,8 +145,8 @@ class HrAnalyticTimesheet(orm.Model):
             self.pool.get('project.task.work').create(cr, uid, {
                 'task_id': task_id,
                 'name': vals.get('name', False),
-                'hours': vals.get('hours', False),
-                'date': vals.get('nadateme', False),
+                'hours': vals.get('unit_amount', False),
+                'date': vals.get('date', False),
                 'user_id': vals.get('user_id', False),
                 }, context=context)
         return res_id
@@ -140,15 +162,12 @@ class HrAnalyticTimesheet(orm.Model):
             
             @return: True on success, False otherwise
         """
-        res = super(HrAnalyticTimesheet, self).write(
-            cr, user, ids, vals, context=context)
-        #if 'project_task_id' in vals:
-        #    import pdb; pdb.set_trace()    
-        #    self.pool.get('project.task.work').write(cr, uid, {
-        #        #
-        #        }, context=context)
-        return res
+        # TODO change place for setup "Yes 100%"
+        vals['to_invoice'] = self._get_yes_100(cr, uid, context=context)
         
+        res = super(HrAnalyticTimesheet, self).write(
+            cr, uid, ids, vals, context=context)
+        return res
     
     # ----------
     # On Change:
