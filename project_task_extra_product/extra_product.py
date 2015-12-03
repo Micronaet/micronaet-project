@@ -241,6 +241,10 @@ class AccountAnalyticLine(orm.Model):
         currency_id = False
         # prepare for iteration on journal and accounts
         for line in self.browse(cr, uid, ids, context=context):
+            # Jump account with recurrent invoice:
+            if line.account_id.recurring_invoice:
+                continue # Jump recurring invoice
+
             # NEW: Get pricelist from account or partner:
             if line.account_id.pricelist_id:
                 pricelist_id = line.account_id.pricelist_id
