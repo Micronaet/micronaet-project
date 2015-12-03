@@ -176,7 +176,9 @@ class HrAnalyticTimesheet(orm.Model):
         item_proxy = self.browse(cr, uid, ts_id, context=context)
         
         # to invoice check:
-        if vals.get('extra_product_id', item_proxy.extra_product_id.id):
+        vals['extra_product_id'] = vals.get(
+            'extra_product_id', 
+            item_proxy.extra_product_id.id)
         vals['to_invoice'] = self._get_to_factor_id(cr, uid, vals, 
             context=context)
         
@@ -204,8 +206,26 @@ class HrAnalyticTimesheet(orm.Model):
                 'user_id': vals.get('user_id', item_proxy.user_id.id),
                 }, context=context)
         return True
-    # TODO Unlink method!!!
-    
+
+    def unlink(self, cr, uid, ids, context=None):
+        """ Delete all record(s) from table heaving record id in ids
+            return True on success, False otherwise 
+            @param cr: cursor to database
+            @param uid: id of current user
+            @param ids: list of record ids to be removed from table
+            @param context: context arguments, like lang, time zone
+            
+            @return: True on success, False otherwise
+        """
+        import pdb; pdb.set_trace()
+        query = '''
+            DELETE from project_task_work
+            WHERE hr_analytic_timesheet_id in %s;           
+            ''' % ('%s' % (list(ids))).replace('[', '(').replace(']', ')')    
+        cr.execute(query)
+        return super(HrAnalyticTimesheet, self).unlink(
+            cr, uid, ids, context=context)
+        
     # ----------
     # On Change:
     # ----------
