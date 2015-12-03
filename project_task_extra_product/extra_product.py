@@ -103,7 +103,7 @@ class HrAnalyticTimesheet(orm.Model):
     '''
     _inherit = 'hr.analytic.timesheet'
     
-    def _get_yes_100(self, cr, uid, total=100, context=None):
+    def _get_to_factor_id(self, cr, uid, total=100, context=None):
         ''' Find invoice all
         '''
         if total == 100:
@@ -112,7 +112,7 @@ class HrAnalyticTimesheet(orm.Model):
             name = 'No (0%)'
             
         factor_pool = self.pool.get('hr_timesheet_invoice.factor')
-        factor_ids = factor_pool.search(cr, uid, [('name', '=', name)], 
+        factor_ids = factor_pool.search(cr, uid, [('name', '=', name)],
             context=context)
         if factor_ids:
             return factor_ids[0]    
@@ -135,7 +135,13 @@ class HrAnalyticTimesheet(orm.Model):
             @return: returns a id of new record
         """
         context = context or {}
-        vals['to_invoice'] = self._get_yes_100(cr, uid, context=context)
+        if vals.get('extra_product_id', False):
+            factor = 100
+        else:
+            factor = 0
+            
+        vals['to_invoice'] = self._get_to_factor_id(cr, uid, factor, 
+            context=context)
         res_id = super(HrAnalyticTimesheet, self).create(
             cr, uid, vals, context=context)
 
@@ -163,7 +169,7 @@ class HrAnalyticTimesheet(orm.Model):
             @return: True on success, False otherwise
         """
         # TODO change place for setup "Yes 100%"
-        vals['to_invoice'] = self._get_yes_100(cr, uid, context=context)
+        vals['to_invoice'] = self._get_to_factor_id(cr, uid, context=context)
         
         res = super(HrAnalyticTimesheet, self).write(
             cr, uid, ids, vals, context=context)
@@ -454,7 +460,7 @@ class AccountAnalyticLine(orm.Model):
         'extra_product_id': fields.many2one(
             'account.analytic.account.pricelist', 
             'Performance', ondelete='set null'),
-        'extra_qty': fields.integer('Q.ty'),
+        'extra_qty': fields.float('Q.ty', digit=(16, 4)),
         'project_task_id': fields.many2one(
             'project.task', 'Task', ondelete='set null'),
         }
