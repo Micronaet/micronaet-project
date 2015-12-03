@@ -312,8 +312,6 @@ class ProjectProjectPricelist(orm.Model):
         'product_id': fields.many2one('product.product', 'Product', 
             required=True, ondelete='set null', 
             domain=[('type', '=', 'service')]),
-        'project_id': fields.many2one('project.project', 'Project', 
-            ondelete='cascade'),
         'account_id': fields.many2one('account.analytic.account', 'Account', 
             ondelete='cascade'),
         'note': fields.text('Note'),
@@ -337,17 +335,17 @@ class AccountAnalyticAccount(orm.Model):
     
     _columns = {
         'pricelist_ids': fields.one2many('project.project.pricelist', 
-             'project_id', 'Pricelist'),             
+             'account_id', 'Pricelist'),             
         }
-
+'''
 class ProjectTaskWork(osv.osv):
-    ''' Add pricelist operation
-    '''    
+    """ Add pricelist operation
+    """    
     _inherit = 'project.task.work'
     
     def _update_extra_product_analytic(self, cr, uid, ids, context=None):
-        ''' Search and update line extra parameters
-        '''
+        """ Search and update line extra parameters
+        """
         if type(ids) not in (list, tuple):
             ids = [ids]
             
@@ -396,6 +394,6 @@ class ProjectTaskWork(osv.osv):
         'extra_product_id': fields.many2one('project.project.pricelist', 
             'Performance', ondelete='set null'),
         'extra_qty': fields.integer('Q.ty'),
-        }
+        }'''
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
