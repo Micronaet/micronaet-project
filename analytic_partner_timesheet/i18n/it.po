@@ -1,0 +1,101 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* analytic_partner_timesheet
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 8.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2015-12-04 07:33+0000\n"
+"PO-Revision-Date: 2015-12-04 08:36+0100\n"
+"Last-Translator: <>\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: \n"
+"Language: it\n"
+"X-Generator: Poedit 1.6.10\n"
+
+#. module: analytic_partner_timesheet
+#: model:ir.model,name:analytic_partner_timesheet.model_analytic_entries_report
+msgid "Analytic Entries Statistics"
+msgstr "Statistiche scritture analitiche"
+
+#. module: analytic_partner_timesheet
+#: model:ir.model,name:analytic_partner_timesheet.model_account_analytic_line
+msgid "Analytic Line"
+msgstr "Linea conto analitico"
+
+#. module: analytic_partner_timesheet
+#: code:addons/analytic_partner_timesheet/partner.py:143
+#, python-format
+msgid "Configuration Error!"
+msgstr "Errore di configurazione!"
+
+#. module: analytic_partner_timesheet
+#: code:addons/analytic_partner_timesheet/partner.py:274
+#, python-format
+msgid ""
+"Contract incomplete. Please fill in the Customer and Pricelist fields for %s."
+msgstr "Contratto non completo. Prego compilare il campo listino cliente: %s."
+
+#. module: analytic_partner_timesheet
+#: code:addons/analytic_partner_timesheet/partner.py:142
+#: code:addons/analytic_partner_timesheet/partner.py:273
+#: code:addons/analytic_partner_timesheet/partner.py:279
+#, python-format
+msgid "Error!"
+msgstr "Errore!"
+
+#. module: analytic_partner_timesheet
+#: field:account.analytic.line,analytic_partner_id:0
+#: view:hr.analytic.timesheet:analytic_partner_timesheet.view_hr_timesheet_line_search
+msgid "Partner"
+msgstr "Partner"
+
+#. module: analytic_partner_timesheet
+#: field:account.analytic.line,extra_product_id:0
+msgid "Performance"
+msgstr "Prestazione"
+
+#. module: analytic_partner_timesheet
+#: code:addons/analytic_partner_timesheet/partner.py:143
+#, python-format
+msgid "Please define income account for product '%s'."
+msgstr "Prego compilare il conto spese per il prodotto: '%s'."
+
+#. module: analytic_partner_timesheet
+#: view:hr.analytic.timesheet:analytic_partner_timesheet.view_hr_timesheet_line_search
+msgid "Product"
+msgstr "Prodotto"
+
+#. module: analytic_partner_timesheet
+#: model:ir.model,name:analytic_partner_timesheet.model_project_task_work
+msgid "Project Task Work"
+msgstr "Lavoro attività progetto"
+
+#. module: analytic_partner_timesheet
+#: field:account.analytic.line,extra_qty:0
+msgid "Q.ty"
+msgstr "Q.tà"
+
+#. module: analytic_partner_timesheet
+#: model:ir.model,name:analytic_partner_timesheet.model_hr_analytic_timesheet
+msgid "Timesheet Line"
+msgstr "Riga Timesheet"
+
+#. module: analytic_partner_timesheet
+#: code:addons/analytic_partner_timesheet/partner.py:280
+#, python-format
+msgid "Trying to invoice non invoiceable line for %s."
+msgstr "Tentativo di fatturare una riga non fatturabile: %s."
+
+#. module: analytic_partner_timesheet
+#: view:hr.analytic.timesheet:analytic_partner_timesheet.view_hr_timesheet_line_tree2
+msgid ""
+"[('type','in',('normal','contract')),('use_timesheets','=',1),'|',"
+"('partner_id','=',False),('partner_id','=',analytic_partner_id)]"
+msgstr ""
+"[('type','in',('normal','contract')),('use_timesheets','=',1),'|',"
+"('partner_id','=',False),('partner_id','=',analytic_partner_id)]"
