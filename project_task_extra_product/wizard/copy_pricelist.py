@@ -52,10 +52,21 @@ class AccountAnalyticAccountPricelistImport(orm.TransientModel):
     def action_import(self, cr, uid, ids, context=None):
         ''' Event for button done
         '''
-        if context is None: 
+        if context is None:
             context = {}        
         
-        wizard_browse = self.browse(cr, uid, ids, context=context)[0]
+        pricelist_pool = self.pool.get('account.analytic.account.pricelist')
+        wiz_proxy = self.browse(cr, uid, ids, context=context)[0]
+        active_id = context.get('active_id', False)
+
+        account = wiz_proxy.account_id
+        for pl in account.pricelist_ids:
+            pricelist_pool.create(cr, uid, {
+                'product_id': pl.product_id.id,
+                'account_id': active_id,
+                'note': pl.note,
+                'pricelist': pl.pricelist,
+                }, context=context)
         
         return {
             'type': 'ir.actions.act_window_close'
@@ -63,10 +74,8 @@ class AccountAnalyticAccountPricelistImport(orm.TransientModel):
 
     _columns = {
         'account_id': fields.many2one(
-            'account.analytic.account', 'From contract', 
+            'account.analytic.account', 'From contract', required=True,
             help='Import all pricelist from contract selected'),
         }
         
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
-
-
