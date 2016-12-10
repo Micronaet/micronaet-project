@@ -40,6 +40,8 @@
     'demo': [],
     'data': [
         'security/ir.model.access.csv',    
+        
+        'wizard/copy_pricelist wizard_view.xml',
         'extra_product_views.xml',
         ],
     'active': False,

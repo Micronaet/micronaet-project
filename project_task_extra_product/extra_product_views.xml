@@ -50,6 +50,7 @@
             <field name="arch" type="xml">
                 <xpath expr="//notebook/page[1]" position="after">
                     <page string="Pricelist">
+                        <button name="%(action_account_analytic_account_pricelist_import)d" string="Import" type="action" class="oe_highlight"/>
                         <field name="pricelist_ids">
                            <tree string="Pricelist" editable="bottom">
                                <field name="product_id" context="{'default_type':'service'}" on_change="onchange_product_id(product_id)"/>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+       <!-- account.analytic.account.pricelist.import -->
+       <record id="account_analytic_account_pricelist_import_wizard_view" model="ir.ui.view">
+            <field name="name">Import contract pricelist</field>
+            <field name="model">account.analytic.account.pricelist.import</field>
+            <field name="arch" type="xml">
+                <form string="Wizard" version="7.0">
+                   <header>
+                       <button string="Cancel" special="cancel" />
+                       <button name="action_import" string="Import" type="object" icon="gtk-jump-to" class="oe_highlight" />
+                   </header>                   
+                   <group colspan="4" col="4">
+                        <field name="account_id" />
+                   </group>
+                </form>
+            </field>
+      </record>
+
+      <record model="ir.actions.act_window" id="action_account_analytic_account_pricelist_import">
+          <field name="name">Import pricelist</field>
+          <field name="res_model">account.analytic.account.pricelist.import</field>
+          <field name="view_type">form</field>
+          <field name="view_mode">form</field>
+          <field name="target">new</field>
+          <field name="view_id" ref="account_analytic_account_pricelist_import_wizard_view"/>
+      </record>
+    </data>
+</openerp>
