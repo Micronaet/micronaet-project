@@ -50,24 +50,29 @@
             <field name="arch" type="xml">
                 <xpath expr="//notebook/page[1]" position="after">
                     <page string="Pricelist">
-                        <button name="%(action_account_analytic_account_pricelist_import)d" string="Import" type="action" class="oe_highlight"/>
-                        <field name="pricelist_ids">
-                           <tree string="Pricelist" editable="bottom">
-                               <field name="product_id" context="{'default_type':'service'}" on_change="onchange_product_id(product_id)"/>
-                               <field name="pricelist"/>
-                               <field name="note"/>
-                           </tree>
-                           <form string="Pricelist" version="7.0">
-                               <sheet>
-                                   <group col="4">
-                                       <field name="product_id" context="{'default_type':'service'}"/>
-                                       <field name="pricelist"/>
-                                       <separator string="Note" colspan="4"/>
-                                       <field name="note" colspan="4" nolabel="1"/>
-                                   </group>
-                               </sheet>
-                           </form>
-                        </field>
+                        <group col="4" colspan="4">
+                            <button name="%(action_account_analytic_account_pricelist_import)d" string="Import" type="action" class="oe_highlight"/>
+                            <newline/>
+                            <field name="reference" />
+                            <field name="reference_account_id" attrs="{'invisible': [('reference','=',True)]}"/>
+                            <field name="pricelist_ids" colspan="4" nolabel="1">
+                               <tree string="Pricelist" editable="bottom">
+                                   <field name="product_id" context="{'default_type':'service'}" on_change="onchange_product_id(product_id)"/>
+                                   <field name="pricelist"/>
+                                   <field name="note"/>
+                               </tree>
+                               <form string="Pricelist" version="7.0">
+                                   <sheet>
+                                       <group col="4">
+                                           <field name="product_id" context="{'default_type':'service'}"/>
+                                           <field name="pricelist"/>
+                                           <separator string="Note" colspan="4"/>
+                                           <field name="note" colspan="4" nolabel="1"/>
+                                       </group>
+                                   </sheet>
+                               </form>
+                            </field>
+                        </group>
                     </page>            
                 </xpath>
             </field>

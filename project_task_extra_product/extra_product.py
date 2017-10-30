@@ -522,6 +522,13 @@ class AccountAnalyticAccount(orm.Model):
     _inherit = 'account.analytic.account'
 
     _columns = {
+        'reference': fields.boolean('Reference pricelist'),
+        'reference_account_id': fields.many2one(
+            'account.analytic.account', 'Parent account',
+            help='Reference account pricelist custom',
+            domain=[('reference', '=', True)],
+            ),
+
         'pricelist_ids': fields.one2many('account.analytic.account.pricelist', 
              'account_id', 'Pricelist'),
         #'project_id': fields.function(_get_project_account_id, 
