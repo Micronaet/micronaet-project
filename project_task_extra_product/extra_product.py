@@ -234,22 +234,47 @@ class HrAnalyticTimesheet(orm.Model):
         ''' Add domain filter for tasks
         '''
         res = super(HrAnalyticTimesheet, self).on_change_account_id(
-            cr, uid, ids, account_id, user_id)
-        
+            cr, uid, ids, account_id, user_id)        
         if not account_id:
             return res
 
-        # Search account_id:
+        # ---------------------------------------------------------------------
+        # Domain create (if account_id present):
+        # ---------------------------------------------------------------------
+        # Add clause if not present:
+        if 'domain' not in res:
+            res['domain'] = {}
+            
+        # A. project_ids:
         project_pool = self.pool.get('project.project')
         project_ids = project_pool.search(cr, uid, [
             ('analytic_account_id', '=', account_id)], context=context)
-        if not project_ids:
-            return res
+        if project_ids:                
+            res['domain']['project_task_id'] = [
+                ('project_id', '=', project_ids[0])]
+        
+        # B. extra_product_id:
+        account_pool = self.pool.get('account.analytic.account')
+        account = account_pool.browse(cr, uid, account_id, context=context)
+        if account.reference_account_id: # Merged
+            product_db = {}
+            # Load parent pricelist:
+            for item in account.reference_account_id.pricelist_ids:            
+                product_db[item.product_id.id] = item.id
 
-        if 'domain' not in res:
-            res['domain'] = {
-                'project_task_id': [('project_id', '=', project_ids[0])]}
-
+            # Load child pricelist:
+            for item in account.pricelist_ids:
+                product_db[item.product_id.id] = item.id
+            _logger.warning('Merge filter')    
+            res['domain']['extra_product_id'] = [
+                ('id', 'in', product_db.values()),
+                ]
+                
+        else: # Normal domain:
+            _logger.warning('Normal filter')    
+            res['domain']['extra_product_id'] = [
+                ('account_id', '=', account_id),
+                ]        
         return res
         
     def onchange_extra_product_id(self, cr, uid, ids, extra_product_id, 

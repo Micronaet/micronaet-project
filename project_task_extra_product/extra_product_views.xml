@@ -1,7 +1,18 @@
 <?xml version="1.0"?>
 <openerp>
     <data>    
-
+        <!--account.analytic.account.pricelist-->
+        <record model="ir.ui.view" id="view_account_analytic_account_pricelist_tree">
+            <field name="name">account.analytic.account.pricelist.tree</field>
+            <field name="model">account.analytic.account.pricelist</field>
+            <field name="arch" type="xml">
+                <tree string="Pricelist">
+                    <field name="product_id" />
+                    <field name="account_id" />
+                </tree>
+            </field>
+        </record>
+        
         <record id="view_view_task_form2_extra_form" model="ir.ui.view">
             <field name="name">project.task.extra.form</field>
             <field name="model">project.task</field>
