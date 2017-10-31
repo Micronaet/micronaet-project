@@ -248,7 +248,8 @@ class HrAnalyticTimesheet(orm.Model):
         # A. project_ids:
         project_pool = self.pool.get('project.project')
         project_ids = project_pool.search(cr, uid, [
-            ('analytic_account_id', '=', account_id)], context=context)
+            ('analytic_account_id', '=', account_id),
+            ], context=context)
         if project_ids:                
             res['domain']['project_task_id'] = [
                 ('project_id', '=', project_ids[0])]

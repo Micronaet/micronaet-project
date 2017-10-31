@@ -404,7 +404,9 @@ class HrAnalyticTimesheet(orm.Model):
         res['value']['project_task_id'] = False
         res['value']['extra_product_id'] = False
         res['value']['extra_qty'] = False 
-        
+        #if 'domain' in res and res['domain']['account_id']:
+        #    res['domain']['account_id'].append(
+        #        ('state', 'not in', ('closed', 'cancelled')))            
         return res
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
